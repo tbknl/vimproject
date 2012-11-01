@@ -60,7 +60,9 @@ function! g:autoVimProject()
 	endif
 
 	" Add project to project dict:
-	" TODO!!! Detect duplicate project names!
+	if has_key(g:vimProjects, w:vimProjectName) && g:vimProjects[w:vimProjectName] != w:vimProjectPath
+		echoerr 'Duplicate project names detected: ' . w:vimProjectName . '. Overriding existing entry.'
+	endif
 	let g:vimProjects[w:vimProjectName] = w:vimProjectPath
 endfunction
 
