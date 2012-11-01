@@ -48,6 +48,7 @@ function! g:autoVimProject()
 	exec 'set path=' . projectPath . '**'
 
 	" VimProject info variables:
+	let w:vimProject = 1
 	let w:vimProjectPath = projectPath
 
 	" VimProject info variables to be defined in vimrproject file:
@@ -66,8 +67,12 @@ endfunction
 
 "" Show Vim Project information:
 function! g:vimProjectInfo()
-	echo 'VimProject Name: ' . w:vimProjectName
-	echo 'VimProject Path: ' . w:vimProjectPath
+	if exists('w:vimProject')
+		echo 'VimProject Name: ' . w:vimProjectName
+		echo 'VimProject Path: ' . w:vimProjectPath
+	else
+		echo 'No VimProject'
+	endif
 endfunction
 
 
