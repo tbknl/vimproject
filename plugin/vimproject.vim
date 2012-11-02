@@ -111,6 +111,7 @@ function! g:vimProjectInfo()
 	if exists('w:vimProjectRoot')
 		echo 'Project name: ' . w:vimProjectName
 		echo 'Project root path: ' . w:vimProjectRoot
+		echo 'Project search path: ' . join(w:vimProjectPath, ',')
 	else
 		echo 'No VimProject'
 	endif
