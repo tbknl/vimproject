@@ -67,7 +67,7 @@ function! g:autoVimProject(loadBuf)
 	endif
 
 	" Check whether window already belongs to a project:
-	if exists('w:vimProjectRoot')
+	if a:loadBuf != 1 && exists('w:vimProjectRoot')
 		exec 'set path=' . join(w:vimProjectPath, ',')
 		call g:resourceVimProjectFileIfModified()
 		return
@@ -77,6 +77,9 @@ function! g:autoVimProject(loadBuf)
 	let currentPath = expand("%:p:h")
 	let projectRoot = g:findFileInAncestorDir(g:vimProjectFilename, currentPath)
 	if projectRoot == ""
+		unlet! w:vimProjectRoot
+		unlet! w:vimProjectName
+		unlet! w:vimProjectPath
 		return
 	endif
 
@@ -123,7 +126,7 @@ endfunction
 
 
 "" Auto commands
-autocmd BufWinEnter * call g:autoVimProject(1)
+autocmd BufRead * call g:autoVimProject(1)
 autocmd WinEnter * call g:autoVimProject(0)
 autocmd BufRead,BufNewFile .vimproject set syntax=vim
 
