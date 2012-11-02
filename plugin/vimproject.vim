@@ -31,6 +31,31 @@ endfunction
 
 let g:vimProjects = {}
 
+
+function! s:fileModificationTime(filePath)
+	return system('stat --printf=%Y ' . a:filePath) + 0
+endfunction
+
+
+function! s:sourceVimProjectFile(filePath)
+	if filereadable(a:filePath)
+		exec 'source ' . a:filePath
+		let w:vimProjectFileModified = s:fileModificationTime(a:filePath)
+	endif
+endfunction
+
+
+function! g:resourceVimProjectFileIfModified()
+	if exists('w:vimProjectPath')
+		let filePath = w:vimProjectPath . g:vimProjectFilename
+		let modified = s:fileModificationTime(filePath)
+		if modified > w:vimProjectFileModified
+			call s:sourceVimProjectFile(filePath)
+		endif
+	endif
+endfunction
+
+
 "" Determine the project path and then:
 ""  1) Change the current directory to it.
 ""  2) Set the current path as it.
@@ -38,6 +63,7 @@ let g:vimProjects = {}
 function! g:autoVimProject()
 	" Check whether window already belongs to a project:
 	if exists('w:vimProjectPath')
+		call g:resourceVimProjectFileIfModified()
 		return
 	endif
 
@@ -59,9 +85,8 @@ function! g:autoVimProject()
 	let w:vimProjectName = 'UndefinedProject'
 
 	" Source the VimProject file:
-	if filereadable(projectPath . g:vimProjectFilename)
-		exec 'source ' . projectPath . g:vimProjectFilename
-	endif
+	let filePath = projectPath . g:vimProjectFilename
+	call s:sourceVimProjectFile(filePath)
 
 	" Add project to project dict:
 	if has_key(g:vimProjects, w:vimProjectName) && g:vimProjects[w:vimProjectName] != w:vimProjectPath
@@ -134,4 +159,8 @@ function! s:vimProjectCreate(name)
 	call g:autoVimProject()
 endfunction
 command! -nargs=1 VPcreate call s:vimProjectCreate(<f-args>)
+
+" Re-source Vim Project file for current window:
+" TODO: Not sure about the name of this command.
+command! VPsource call g:resourceVimProjectFileIfModified()
 
