@@ -126,7 +126,7 @@ endfunction
 
 
 "" Auto commands
-autocmd BufRead * call g:autoVimProject(1)
+autocmd BufWinEnter,BufRead * call g:autoVimProject(1)
 autocmd WinEnter * call g:autoVimProject(0)
 autocmd BufRead,BufNewFile .vimproject set syntax=vim
 
