@@ -147,15 +147,15 @@ endfunction
 
 " Edit the current Vim Project file:
 function! s:vimProjectEditProjectFile(...)
-	if a:0 == 1
-		exec 'tabedit ' . g:vimProjects[a:1] . g:vimProjectFilename
+	if a:0 > 0
+		exec 'tabedit ' . g:vimProjects[join(a:000, ' ')] . g:vimProjectFilename
 	elseif exists('w:vimProjectRoot')
 		exec 'tabedit ' . w:vimProjectRoot . g:vimProjectFilename
 	else
 		echo 'No VimProject'
 	endif
 endfunction
-command! -nargs=? -complete=customlist,VimProjectNames VPedit call s:vimProjectEditProjectFile()
+command! -nargs=? -complete=customlist,VimProjectNames VPedit call s:vimProjectEditProjectFile(<f-args>)
 
 " Create a new Vim Project file:
 function! s:vimProjectCreate(name)
