@@ -135,14 +135,16 @@ function! VimProjectNames(A,L,P)
 endfunction
 
 " Edit the current Vim Project file:
-function! s:vimProjectEditProjectFile()
-	if exists('w:vimProjectPath')
+function! s:vimProjectEditProjectFile(...)
+	if a:0 == 1
+		exec 'tabedit ' . g:vimProjects[a:1] . g:vimProjectFilename
+	elseif exists('w:vimProjectPath')
 		exec 'tabedit ' . w:vimProjectPath . g:vimProjectFilename
 	else
 		echo 'No VimProject'
 	endif
 endfunction
-command! VPedit call s:vimProjectEditProjectFile()
+command! -nargs=? -complete=customlist,VimProjectNames VPedit call s:vimProjectEditProjectFile()
 
 " Create a new Vim Project file:
 function! s:vimProjectCreate(name)
