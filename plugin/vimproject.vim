@@ -46,8 +46,8 @@ endfunction
 
 
 function! g:resourceVimProjectFileIfModified()
-	if exists('w:vimProjectPath')
-		let filePath = w:vimProjectPath . g:vimProjectFilename
+	if exists('w:vimProjectRoot')
+		let filePath = w:vimProjectRoot . g:vimProjectFilename
 		let modified = s:fileModificationTime(filePath)
 		if modified > w:vimProjectFileModified
 			call s:sourceVimProjectFile(filePath)
@@ -60,47 +60,54 @@ endfunction
 ""  1) Change the current directory to it.
 ""  2) Set the current path as it.
 ""  3) Source the vimproject file.
-function! g:autoVimProject()
+function! g:autoVimProject(loadBuf)
+	" Check whether the buffer is already loaded for the window:
+	if a:loadBuf != 1 && !exists('w:vimProjectRoot')
+		return
+	endif
+
 	" Check whether window already belongs to a project:
-	if exists('w:vimProjectPath')
+	if exists('w:vimProjectRoot')
+		exec 'set path=' . join(w:vimProjectPath, ',')
 		call g:resourceVimProjectFileIfModified()
 		return
 	endif
 
 	" Find the project path:
 	let currentPath = expand("%:p:h")
-	let projectPath = g:findFileInAncestorDir(g:vimProjectFilename, currentPath)
-	if projectPath == ""
+	let projectRoot = g:findFileInAncestorDir(g:vimProjectFilename, currentPath)
+	if projectRoot == ""
 		return
 	endif
 
 	" Set Vim path based on the project path:
-	exec 'lcd ' . projectPath
-	exec 'set path=' . projectPath . '**'
+	exec 'lcd ' . projectRoot
+	exec 'set path=' . projectRoot . '**'
 
 	" VimProject info variables:
-	let w:vimProjectPath = projectPath
+	let w:vimProjectRoot = projectRoot
 
-	" VimProject info variables to be defined in vimrproject file:
+	" VimProject info variables to be defined or extended in vimrproject file:
 	let w:vimProjectName = 'UndefinedProject'
+	let w:vimProjectPath = [projectRoot . '**']
 
 	" Source the VimProject file:
-	let filePath = projectPath . g:vimProjectFilename
+	let filePath = projectRoot . g:vimProjectFilename
 	call s:sourceVimProjectFile(filePath)
 
 	" Add project to project dict:
-	if has_key(g:vimProjects, w:vimProjectName) && g:vimProjects[w:vimProjectName] != w:vimProjectPath
+	if has_key(g:vimProjects, w:vimProjectName) && g:vimProjects[w:vimProjectName] != w:vimProjectRoot
 		echoerr 'Duplicate project names detected: ' . w:vimProjectName . '. Overriding existing entry.'
 	endif
-	let g:vimProjects[w:vimProjectName] = w:vimProjectPath
+	let g:vimProjects[w:vimProjectName] = w:vimProjectRoot
 endfunction
 
 
 "" Show Vim Project information:
 function! g:vimProjectInfo()
-	if exists('w:vimProjectPath')
-		echo 'VimProject Name: ' . w:vimProjectName
-		echo 'VimProject Path: ' . w:vimProjectPath
+	if exists('w:vimProjectRoot')
+		echo 'Project name: ' . w:vimProjectName
+		echo 'Project root path: ' . w:vimProjectRoot
 	else
 		echo 'No VimProject'
 	endif
@@ -116,7 +123,8 @@ endfunction
 
 
 "" Auto commands
-autocmd BufWinEnter,WinEnter * call g:autoVimProject()
+autocmd BufWinEnter * call g:autoVimProject(1)
+autocmd WinEnter * call g:autoVimProject(0)
 autocmd BufRead,BufNewFile .vimproject set syntax=vim
 
 
@@ -129,7 +137,7 @@ command! VPinfo call g:vimProjectInfo()
 command! VPall call g:vimProjectListAll()
 
 " Create a tab and open the directory at the Vim Project path:
-command! -nargs=1 -complete=customlist,VimProjectNames VPtab exec 'tabedit ' . g:vimProjects[<f-args>] | call g:autoVimProject()
+command! -nargs=1 -complete=customlist,VimProjectNames VPtab exec 'tabedit ' . g:vimProjects[<f-args>] | call g:autoVimProject(1)
 function! VimProjectNames(A,L,P)
 	return filter(keys(g:vimProjects), 'strlen(v:val) >= strlen(a:A) && stridx(v:val, a:A) == 0')
 endfunction
@@ -138,8 +146,8 @@ endfunction
 function! s:vimProjectEditProjectFile(...)
 	if a:0 == 1
 		exec 'tabedit ' . g:vimProjects[a:1] . g:vimProjectFilename
-	elseif exists('w:vimProjectPath')
-		exec 'tabedit ' . w:vimProjectPath . g:vimProjectFilename
+	elseif exists('w:vimProjectRoot')
+		exec 'tabedit ' . w:vimProjectRoot . g:vimProjectFilename
 	else
 		echo 'No VimProject'
 	endif
@@ -158,7 +166,7 @@ function! s:vimProjectCreate(name)
 	call setline(2, '')
 	call setline(3, '" Insert your project specific window initialization code here.')
 	w
-	call g:autoVimProject()
+	call g:autoVimProject(1)
 endfunction
 command! -nargs=1 VPcreate call s:vimProjectCreate(<f-args>)
 
