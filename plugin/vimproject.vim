@@ -36,6 +36,11 @@ let g:vimProjects = {}
 ""  2) Set the current path as it.
 ""  3) Source the vimproject file.
 function! g:autoVimProject()
+	" Check whether window already belongs to a project:
+	if exists('w:vimProjectPath')
+		return
+	endif
+
 	" Find the project path:
 	let currentPath = expand("%:p:h")
 	let projectPath = g:findFileInAncestorDir(g:vimProjectFilename, currentPath)
@@ -48,7 +53,6 @@ function! g:autoVimProject()
 	exec 'set path=' . projectPath . '**'
 
 	" VimProject info variables:
-	let w:vimProject = 1
 	let w:vimProjectPath = projectPath
 
 	" VimProject info variables to be defined in vimrproject file:
@@ -69,7 +73,7 @@ endfunction
 
 "" Show Vim Project information:
 function! g:vimProjectInfo()
-	if exists('w:vimProject')
+	if exists('w:vimProjectPath')
 		echo 'VimProject Name: ' . w:vimProjectName
 		echo 'VimProject Path: ' . w:vimProjectPath
 	else
@@ -87,6 +91,7 @@ endfunction
 
 
 "" Auto commands
+autocmd BufWinEnter,WinEnter * call g:autoVimProject()
 autocmd BufRead,BufNewFile .vimproject set syntax=vim
 
 
@@ -105,5 +110,28 @@ function! VimProjectNames(A,L,P)
 endfunction
 
 " Edit the current Vim Project file:
-command! VPedit exec 'tabedit ' . w:vimProjectPath . g:vimProjectFilename
+function! s:vimProjectEditProjectFile()
+	if exists('w:vimProjectPath')
+		exec 'tabedit ' . w:vimProjectPath . g:vimProjectFilename
+	else
+		echo 'No VimProject'
+	endif
+endfunction
+command! VPedit call s:vimProjectEditProjectFile()
+
+" Create a new Vim Project file:
+function! s:vimProjectCreate(name)
+	let filePath = getcwd() . '/' . g:vimProjectFilename
+	if filereadable(filePath)
+		echoerr 'Vim Project file already exists. Will not overwrite it.'
+		return
+	endif
+	exec 'tabedit ' . filePath
+	call setline(1, "let w:vimProjectName = '" . a:name . "'")
+	call setline(2, '')
+	call setline(3, '" Insert your project specific window initialization code here.')
+	w
+	call g:autoVimProject()
+endfunction
+command! -nargs=1 VPcreate call s:vimProjectCreate(<f-args>)
 
