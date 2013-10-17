@@ -129,7 +129,7 @@ endfunction
 
 
 "" Auto commands
-autocmd BufWinEnter,BufRead * call g:autoVimProject()
+autocmd VimEnter,BufWinEnter,BufRead * call g:autoVimProject()
 autocmd WinEnter * call g:vimProjectSetDirAndPath()
 autocmd BufRead,BufNewFile .vimproject set syntax=vim
 
