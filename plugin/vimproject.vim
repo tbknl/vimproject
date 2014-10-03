@@ -16,7 +16,7 @@ let g:vimProjectFilename = '.vimproject'
 "" @param filename File name to search for.
 "" @param dir Directory to start searching in.
 "" @return The directory path or empty string if not found.
-function! g:findFileInAncestorDir(filename, dir)
+function! s:findFileInAncestorDir(filename, dir)
 	let curdir = simplify(a:dir."/")
 	while 1
 		if filereadable(curdir.a:filename)
@@ -45,7 +45,7 @@ function! s:sourceVimProjectFile(filePath)
 endfunction
 
 
-function! g:resourceVimProjectFileIfModified()
+function! ResourceVimProjectFileIfModified()
 	if exists('w:vimProjectRoot')
 		let filePath = w:vimProjectRoot . g:vimProjectFilename
 		let modified = s:fileModificationTime(filePath)
@@ -56,7 +56,7 @@ function! g:resourceVimProjectFileIfModified()
 endfunction
 
 
-function! g:vimProjectSetDirAndPath()
+function! VimProjectSetDirAndPath()
 	" Do nothing if the window has no associated project:
 	if !exists('w:vimProjectRoot')
 		return
@@ -67,7 +67,7 @@ function! g:vimProjectSetDirAndPath()
 	exec 'set path=' . join(w:vimProjectPath, ',')
 
 	" Source the project file if modified:
-	call g:resourceVimProjectFileIfModified()
+	call ResourceVimProjectFileIfModified()
 endfunction
 
 
@@ -75,10 +75,10 @@ endfunction
 ""  1) Change the current directory to it.
 ""  2) Set the current path as it.
 ""  3) Source the vimproject file.
-function! g:autoVimProject()
+function! AutoVimProject()
 	" Find the project path:
 	let currentPath = expand("%:p:h")
-	let projectRoot = g:findFileInAncestorDir(g:vimProjectFilename, currentPath)
+	let projectRoot = s:findFileInAncestorDir(g:vimProjectFilename, currentPath)
 	if projectRoot == ""
 		unlet! w:vimProjectRoot
 		unlet! w:vimProjectName
@@ -104,12 +104,12 @@ function! g:autoVimProject()
 	let g:vimProjects[w:vimProjectName] = w:vimProjectRoot
 
 	" Set dir and path for window:
-	call g:vimProjectSetDirAndPath()
+	call VimProjectSetDirAndPath()
 endfunction
 
 
 "" Show Vim Project information:
-function! g:vimProjectInfo()
+function! VimProjectInfo()
 	if exists('w:vimProjectRoot')
 		echo 'Project name: ' . w:vimProjectName
 		echo 'Project root path: ' . w:vimProjectRoot
@@ -121,7 +121,7 @@ endfunction
 
 
 "" List all project names and paths:
-function! g:vimProjectListAll()
+function! VimProjectListAll()
 	for [name, path] in items(g:vimProjects)
 		echo name . ': ' . path
 	endfor
@@ -129,21 +129,21 @@ endfunction
 
 
 "" Auto commands
-autocmd VimEnter,BufWinEnter,BufRead * call g:autoVimProject()
-autocmd WinEnter * call g:vimProjectSetDirAndPath()
+autocmd VimEnter,BufWinEnter,BufRead * call AutoVimProject()
+autocmd WinEnter * call VimProjectSetDirAndPath()
 autocmd BufRead,BufNewFile .vimproject set syntax=vim
 
 
 "" Commands
 
 " Information about the current project:
-command! VPinfo call g:vimProjectInfo()
+command! VPinfo call VimProjectInfo()
 
 " List all projects:
-command! VPall call g:vimProjectListAll()
+command! VPall call VimProjectListAll()
 
 " Create a tab and open the directory at the Vim Project path:
-command! -nargs=1 -complete=customlist,VimProjectNames VPtab exec 'tabedit ' . g:vimProjects[<f-args>] | call g:autoVimProject()
+command! -nargs=1 -complete=customlist,VimProjectNames VPtab exec 'tabedit ' . g:vimProjects[<f-args>] | call AutoVimProject()
 function! VimProjectNames(A,L,P)
 	return filter(keys(g:vimProjects), 'strlen(v:val) >= strlen(a:A) && stridx(v:val, a:A) == 0')
 endfunction
@@ -172,11 +172,11 @@ function! s:vimProjectCreate(name)
 	call setline(2, '')
 	call setline(3, '" Insert your project specific window initialization code here.')
 	w
-	call g:autoVimProject()
+	call AutoVimProject()
 endfunction
 command! -nargs=1 VPcreate call s:vimProjectCreate(<f-args>)
 
 " Re-source Vim Project file for current window:
 " TODO: Not sure about the name of this command.
-command! VPsource call g:resourceVimProjectFileIfModified()
+command! VPsource call ResourceVimProjectFileIfModified()
 
